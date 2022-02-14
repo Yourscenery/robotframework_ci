@@ -1,0 +1,52 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Keywords ***
+assert_response_database_delete-v2
+    [Arguments]    ${tableSelectFrom}    ${tableWhereColumnName}=id    ${ids}=${none}
+    [Documentation]    判断接口操作的结果是否正确修改数据库数据；
+    ...    删除：硬删除--数据库是否存在；软删除--数据库里字段属性修改是否正确；
+    ...    V1---对比格式：[(1, 'xxxxx'), (1, 'xxxxx')]
+    ...    V2---转换两个列表|元祖成一个字典；***字典键名唯一
+    log    *d*d*${tableSelectFrom}---${tableWhereColumnName}---${ids}
+    run keyword if    '${ids}'=='${none}' and '${tableWhereColumnName}'=='${none}' and '${tableSelectFrom}'=='${none}'    fail    删除sql表达式存在none值
+    #获取每列的值拼接作为where语句
+    ${whereValue}    convert to string    ${ids}
+    ${whereValue}    replace string    ${whereValue}    ,    ","
+    ${sqlScript}    set variable    ${tableSelectFrom} where ${tableWhereColumnName} in ("${whereValue}")
+    ${db_result_data}=    db_open_query_close    ${sqlScript}
+    ${dict_db_result_data}    evaluate    dict(${db_result_data})    #结果转换成字典
+    ${listids}    split string    ${ids}    ,
+    ${listidsLen}    get length    ${listids}
+    ${1list}    evaluate    [1]*${listidsLen}
+    ${dict_case_data}    evaluate    dict(zip(${listids},${1list}))
+    log    case_data${dict_case_data}
+    log    db_result_data${dict_db_result_data}  
+    should be equal    ${dict_case_data}    ${dict_db_result_data}     msg=dict_case_data不等于dict_db_result_data
+    log    ***pass【接口操作的结果等于数据库数据】***
+
+
+
+
+assert_response_database_add_or_update-v2
+    [Arguments]    ${apikey and dbkey}    ${dicParams}    ${tableFromWhere}
+    [Documentation]    判断接口操作的结果是否正确修改数据库数据；
+    ...    新增：不管接口有无返回值--比较新增内容与数据库查找值
+    ...    更新：同新增；
+    ...    对比格式：(xxxxx, xx, 123456)
+    ...    取dicParams的key值等于tableColumnName，顺序、数量
+    ...      转换两个列表|元祖成一个字典   a = ('a4','a22','a33','a4')     b = ('b33','b2','b11')    d = dict(zip(a,b)) 
+    log    *a*a*${apikey and dbkey}---${dicParams}---${tableFromWhere}
+    @{apikeys}    get dictionary keys    ${apikey and dbkey}    sort_keys=False
+    #tableColumnName，作为select 的查询字段；
+    : FOR    ${i}    ${item}    IN ENUMERATE    @{apikeys}
+    \    Continue For Loop If    '${item}'=='id' or '${item}'=='lightingid'    #跳过dicParams中没有的字段
+    \    ${tableColumnName}    set variable if    '${i}'=='0'    ${apikey and dbkey}[${item}]    ${tableColumnName}, ${apikey and dbkey}[${item}]
+    ${sqlScript}    set variable    SELECT ${tableColumnName} FROM ${tableFromWhere}
+    ${db_result_data}=    db_open_query_close    ${sqlScript}
+    ${dict_db_result_data}    evaluate    dict(zip(${apikeys},${db_result_data}[0]))    #接口字段作为数据库字典的键
+    log    case_data${case_data}
+    log    db_result_data${db_result_data}
+    should be equal    ${dicParams}    ${dict_db_result_data}    msg=case_data不等于db_result_data
+    dictionaries should be equal    ${dicParams}    ${dict_db_result_data}
+    log    ***pass【接口操作的结果等于数据库数据】***

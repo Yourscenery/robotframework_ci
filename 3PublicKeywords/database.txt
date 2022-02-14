@@ -1,0 +1,32 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Keywords ***
+db_open_query_close
+    [Arguments]    ${sqlScript}
+    connect to database using custom params    pymysql    ${G_DB_CONFIG_DEVICE}
+    @{data}    query    ${sqlScript}
+    log    ${data}
+    disconnect from database
+    [Return]    ${data}
+
+db_open_execute_close
+    [Arguments]    ${sqlScript}
+    connect to database using custom params    pymysql    ${G_DB_CONFIG_DEVICE}
+    execute sql string    ${sqlScript}
+    disconnect from database
+
+db_open_execute_query_close
+    [Arguments]    ${executeType}    ${executeSqlScript}    ${querySqlScript}
+    connect to database using custom params    pymysql    ${G_DB_CONFIG_DEVICE}
+    @{firstData}    query    ${querySqlScript}
+    execute sql string    ${executeSqlScript}
+    #${s}    evaluate    type($secondData)    #type($secondData)#<class 'list'>,只是一个list,[ (None, 'c4b1', '100000', '100000
+    #    确认执行结果是否成功：@{firstData}与@{secondData}的关系，删除、新增不等于，编辑唯一标识符等于；
+    @{secondData}    query    ${querySqlScript}
+    Run keyword if    '${executeType}'=='add'    List Should Contain Value    @{secondData}    c4b11544-9f67-4de7-aa4d-be2ad62c9a65run keywords
+    ...    ELSE IF    '${executeType}'=='update'    List Should Contain Value    @{secondData}    c4b11544-9f67-4de7-aa4d-be2ad62c9a65run keywords
+    ...    ELSE IF    '${executeType}'=='delete'    log    should be empty    @{secondData}
+    ...    ELSE IF    log    ${executeType}值不在add\update\delete中
+    disconnect from database
+    [Return]    ${secondData}

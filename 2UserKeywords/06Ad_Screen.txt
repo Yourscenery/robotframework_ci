@@ -1,0 +1,118 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Variables ***
+${adscreenTableName}    t_ad_screen_device    # 数据库中广告屏的表名
+##adscreen apikey and dbkey接口请求参数=数据库字段名，用户接口内容与数据库内容断言（如不需断言字段，需在断言类里跳过）
+&{adscreen apikey and dbkey}    projectId=project_id    areaId=area_id    deviceName=device_name    cardNumber=card_number    platformId=platform_id    deviceWidth=device_width    deviceHeight=device_height
+...               longitude=longitude    latitude=latitude    maxBrightness=max_brightness    remark=remark    deviceType=device_type    id=id
+${ADD_ADSCREEN_SUCCESS}    添加成功
+${PAGE_ADSCREEN_SUCCESS}    成功
+${UPDATE_ADSCREEN_SUCCESS}    编辑成功
+${DELETE_ADSCREEN_SUCCESS}    删除成功
+
+*** Keywords ***
+adscreen_edit_add
+    [Arguments]    ${dicParams}    ${message}=${ADD_ADSCREEN_SUCCESS}    ${returnKey}=object
+    ${url}    set variable    /ad-screen/device/add
+    ${dicAssert}    create dictionary    message=${message}
+    ${returnValue}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${bIn}=    evaluate    '.' in '${returnKey}'
+    ${adscreenId}    set variable if    ${bIn}==${false}    ${returnValue}[id]    ${returnValue}
+    run keyword if    '${adscreenId}'!='${none}' and '${message}'=='${ADD_ADSCREEN_SUCCESS}'    set suite variable    ${S_ADD_ADSCREEN_ID}    ${adscreenId}
+    #数据库断言--获取每列的值拼接作为where语句
+    ${tableFromWhere}    set variable    ${adscreenTableName} WHERE id='${adscreenId}' and device_name='${dicParams}[deviceName]' and card_number='${dicParams}[cardNumber]'
+    run keyword if    '${adscreenId}'!='${none}' and '${message}'=='${ADD_ADSCREEN_SUCCESS}'    assert_response_database_add_or_update    ${adscreen apikey and dbkey}    ${dicParams}    ${tableFromWhere}
+    ...    ELSE    log    ***pass【没新增成功不走数据库断言】***
+    [Return]    ${adscreenId}
+
+adscreen_edit_add_oneData
+    [Arguments]    ${mark}=a
+    [Documentation]    固定数据新增一条广告屏数据，用于更新、删除接口使用
+    log    ---新增一条广告屏数据并获取其id---
+    ${time}=    get_time_no_year
+    ${dicParams}    create dictionary    projectId=${G_PROJECT_ID}    areaId=${G_AREA_ID}    deviceName=o${mark}屏${time}    cardNumber=ym-${time}    platformId=real-time
+    ...    deviceWidth=64    deviceHeight=64    longitude=1.0    latitude=1.0    maxBrightness=64    remark=${mark}${time}
+    ...    deviceType=0
+    ${adscreenId}=    adscreen_edit_add    ${dicParams}
+    [Return]    ${adscreenId}
+
+adscreen_edit_query
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=records
+    ${url}    set variable    /adscreen/adscreen/query
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    #获取第一行数据id
+    ${adscreenId}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][id]
+    ...    ELSE    set variable    ${None}
+    #数据库断言------获取每列的值拼接作为where语句
+    #${tableWhereStatement}    set variable    id in (${adscreenId})
+    run keyword if    ${lenRespKeyVal}>0    assert_response_database_query    ${adscreen apikey and dbkey}    ${respKeyVal}    ${adscreenTableName}    id
+    ...    ELSE    log    ***pass【没查询数据不走数据库断言】***
+    [Return]    ${adscreenId}
+
+adscreen_edit_pageCondition
+    [Arguments]    ${dicParams}    ${message}=${PAGE_ADSCREEN_SUCCESS}    ${returnKey}=object.records
+    ${url}    set variable    /adscreen/adscreen/page-condition
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    #获取第一行数据id
+    ${adscreenId}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][id]
+    ...    ELSE    set variable    ${None}    #数据库断言------获取每列的值拼接作为where语句    #${tableWhereStatement}    set variable
+    ...    # id in (${adscreenId})    #run keyword if    ${lenRespKeyVal}>0    assert_response_database_query    ${adscreen apikey and dbkey}    ${respKeyVal}
+    ...    # ${adscreenTableName}    id    # ELSE    log    ***pass【没查询数据不走数据库断言】***
+    [Return]    ${adscreenId}
+
+adscreen_edit_update
+    [Arguments]    ${dicParams}    ${message}=${UPDATE_ADSCREEN_SUCCESS}    ${returnKey}=object.id
+    ${url}    set variable    /adscreen/adscreen/update
+    ${dicAssert}    create dictionary    message=${message}
+    ${adscreenId}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    #数据库断言--获取每列的值拼接作为where语句
+    ${tableFromWhere}    Set Variable If    '${adscreenId}'!='${none}' and '${message}'=='${UPDATE_ADSCREEN_SUCCESS}'    ${adscreenTableName} WHERE id='${adscreenId}' and area_id='${dicParams}[areaId]' and device_name='${dicParams}[deviceName]' and device_number='${dicParams}[deviceNumber]'
+    run keyword if    '${adscreenId}'!='${none}' and '${message}'=='${UPDATE_ADSCREEN_SUCCESS}'    assert_response_database_add_or_update    ${adscreen apikey and dbkey}    ${dicParams}    ${tableFromWhere}
+    ...    ELSE    log    ***pass【没更新成功不走数据库断言】***
+    [Return]    ${adscreenId}
+
+adscreen_edit_delete
+    [Arguments]    ${dicParams}    ${message}=${DELETE_ADSCREEN_SUCCESS}
+    ${url}    set variable    /adscreen/adscreen/delete
+    ${dicAssert}    create dictionary    message=${message}
+    http_post    ${url}    ${dicParams}    ${dicAssert}
+    #数据库断言
+    ${ids}    get from dictionary    ${dicParams}    ids[]
+    #tableSelectFrom，作为select 的查询字段；
+    ${tableSelectFrom}    set variable    select id,deleted from ${adscreenTableName}
+    run keyword if    '${ids}'!='${none}' and '${message}'=='${DELETE_ADSCREEN_SUCCESS}'    assert_response_database_delete    ${tableSelectFrom}    id    ${ids}
+    ...    ELSE    log    ***pass【没删除成功不走数据库断言】***
+
+adscreen_overview_status_num
+    [Arguments]    ${success}=True    ${returnKey}=object
+    [Documentation]    设备总览-广告屏设备在离线统计
+    ${url}    set variable    /adscreen/adscreen/statusNum
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_post_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    log    ***${respKeyVal}[onlineNum]在线；${respKeyVal}[offlineNum]离线；
+    [Return]    ${respKeyVal}
+
+adscreen_overview_getAdscreenListByLighting
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=records
+    [Documentation]    设备总览-广告屏列表 deviceAlias=3&size=10current=2
+    ${url}    set variable    /lighting/lighting/getAdscreenListByLighting
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    #获取第一行数据id
+    ${adscreenId}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][id]
+    ...    ELSE    set variable    ${None}
+    [Return]    ${adscreenId}
+
+adscreen_overview_status
+    [Arguments]    ${dicParams}    ${success}=True    ${returnKey}=object
+    [Documentation]    设备总览-广告屏设备-查询ids[]: 0884a4366bd799a33671611c015e3bd0,
+    ${url}    set variable    /adscreen/adscreen/status
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}

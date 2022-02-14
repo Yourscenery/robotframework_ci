@@ -1,0 +1,45 @@
+*** Settings ***
+Library           Collections
+Library           ExcelLibrary
+Library           RequestsLibrary
+Library           String
+Library           DatabaseLibrary
+Library           OperatingSystem
+Library           Telnet
+Library           DateTime
+Library           Screenshot
+Library           XML
+Library           Process
+Resource          2UserKeywords/01GIS.txt
+Resource          2UserKeywords/02Camera.txt
+Resource          2UserKeywords/03Door.txt
+Resource          2UserKeywords/04Alarm.txt
+Resource          2UserKeywords/05Lighting.txt
+Resource          2UserKeywords/06Ad_Screen.txt
+Resource          2UserKeywords/07Spon.txt
+Resource          2UserKeywords/08Envir.txt
+Resource          2UserKeywords/09Project.txt
+Resource          2UserKeywords/10Bright.txt
+Resource          2UserKeywords/20Park.txt
+Resource          3PublicKeywords/database.txt
+Resource          3PublicKeywords/excel.txt
+Resource          3PublicKeywords/http.txt
+Resource          3PublicKeywords/publickeywords.txt
+Resource          3PublicKeywords/assert_response_database.txt
+Library           4DiyLibrarys/diyPublickwords.py
+
+*** Keywords ***
+Common_Test_Setup
+    [Arguments]    ${TEST NAME}    ${OUTPUT DIR}
+    log    -----Common_Test_Setup----
+    #Change log level for debug
+    #set log to custom path#https://blog.csdn.net/Allan_shore_ma/article/details/63391623
+    #create log path    ${TEST NAME}    ${OUTPUT DIR}
+    #save screenshot to current directory
+
+Common_Test_Teardown
+    log    -----Common_Test_Teardown----
+
+思考
+    log    【数据库断言、内容断言实现】list,directory的should be equal 是无序的，比较值不用在意顺序
+    log    数据库字段类型限制，会自动对值做处理，这样情况如何断言？int\double\decimal...

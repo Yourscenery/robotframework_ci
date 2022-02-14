@@ -1,0 +1,85 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Keywords ***
+excel_http_read_excel_and_send_post_request
+    [Arguments]    ${excelPath}    ${excelSheetName}    ${url}
+    ${listRowsVal}    excel returnRowsList    ${excelPath}    ${excelSheetName}
+    : FOR    ${item}    IN    @{listRowsVal}
+    \    log    执行【@{item}[0]】用例    #multiple_for    @{item}
+    \    ${assert}    evaluate    eval("@{item}[1]")
+    \    ${return}    set variable    @{item}[2]
+    \    ${level}    set variable    @{item}[3]
+    \    ${params}    set variable    @{item}[4]
+    \    post assert_returnValue    ${url}    ${params}    ${assert}    ${return}
+
+excel_return_rowslist
+    [Arguments]    ${excelPath}    ${sheetName}    ${level}=all
+    @{listExcelRows}    create list
+    #第二版，第一行：除第一列，值与index关系；    #其他行第一列，执行用例名；    #其他行倒数第二列，字典类型，直接传；    #其他行倒数第一列，需要返回值的字段名，可为空    #其他行，组合生成参数=值的dictionary后传，值可为空
+    #open excel    testcases\\rf-rbac_test_cases\\rf-rbac_test_cases.xls
+    open excel    ${excelPath}
+    ${rowCount}    get row count    ${sheetName}
+    ${columnCount}    get column count    ${sheetName}
+    ${firstRow}    get row values    ${sheetName}    0
+    #excel读取出来的list字段值，转换成dictionary格式
+    ${dicFirstRow}    convert to dictionary    ${firstRow}
+    dictionary should not contain value    ${dicFirstRow}    ${EMPTY}    msg='列头不能为空'
+    ##1、获取第一行数据，获取[1~n-2]（包含）中第一列值，记录值与列数生成dictionary
+    ${listFirstRowVal}    get dictionary values    ${dicFirstRow}
+    #倒数第二列和倒数第一列是否等于asserts，returnvalue
+    ${assertsId}    get index from list    ${listFirstRowVal}    asserts
+    ${returnvalId}    get index from list    ${listFirstRowVal}    returnvalue
+    ${levelId}    get index from list    ${listFirstRowVal}    level
+    ${c-3}    evaluate    ${columnCount}-3
+    ${c-2}    evaluate    ${columnCount}-2
+    ${c-1}    evaluate    ${columnCount}-1
+    should be equal    ${assertsId}    ${c-3}    msg='倒数第三列头不是【asserts】'
+    should be equal    ${returnvalId}    ${c-2}    msg='倒数第二列头不是【returnvalue】'
+    should be equal    ${levelId}    ${c-1}    msg='倒数第二列头不是【level】'
+    #2、从第二行读取值，输出第一列值，除了第一列和最后两列，其他都是参数列(IN RANGE    结束数字不包括)
+    : FOR    ${k}    IN RANGE    1    ${rowCount}
+    \    ${row}    get row values    ${sheetName}    ${k}
+    \    ${dicRow}    convert to dictionary    ${row}
+    \    @{listRowVal}    get dictionary values    ${dicRow}
+    \    #run keyword if    ${level}==@{listRowVal}[${c-1}]
+    \    ${paramsAssertsReturnvalue}    excel set_params_to_list_two    ${columnCount}    ${listFirstRowVal}    @{listRowVal}
+    \    append to list    ${listExcelRows}    ${paramsAssertsReturnvalue}
+    log    excel return_rowslist
+    [Return]    @{listExcelRows}
+
+excel_set_params_to_list_two
+    [Arguments]    ${columnCount}    ${listFirstRowVal}    @{listRowVal}
+    [Documentation]    依据每行读取的数据，转换成一个list数据，list里包含此行此列值，params转换成dictionary后放置list最后
+    ${listrow}    create list
+    ${params}    create dictionary
+    #用例列头位置
+    : FOR    ${i}    ${itemVal}    IN ENUMERATE    @{listRowVal}
+    \    ${key}    get from list    ${listFirstRowVal}    ${i}
+    \    run keyword if    ${i}==0    append to list    ${listrow}    ${itemVal}
+    \    ...    ELSE IF    0<${i}<${columnCount}-3    set to dictionary    ${params}    ${key}=${itemVal}
+    \    ...    ELSE IF    ${i}==${columnCount}-3    append to list    ${listrow}    ${itemVal}
+    \    ...    ELSE IF    ${i}==${columnCount}-2    append to list    ${listrow}    ${itemVal}
+    \    ...    ELSE IF    ${i}==${columnCount}-1    append to list    ${listrow}    ${itemVal}
+    \    run keyword if    ${i}==${columnCount}-1    append to list    ${listrow}    ${params}
+    log    OFFexcel set_params_to_list_two
+    [Return]    @{listrow}
+
+excel_set_params_to_dict_one
+    [Arguments]    ${columnCount}    ${listFirstRowVal}    @{listRowVal}
+    [Documentation]    根据每行数据，转换成列头名=列数据的dictionary类型数据并单个返回
+    ${testcasename}    create dictionary
+    ${params}    create dictionary
+    ${asserts}    create dictionary
+    ${returnValue}    create dictionary
+    ${level}    create dictionary
+    #用例列头位置
+    : FOR    ${i}    ${itemVal}    IN ENUMERATE    @{listRowVal}
+    \    ${key}    get from list    ${listFirstRowVal}    ${i}
+    \    run keyword if    ${i}==0    set to dictionary    ${testcasename}    ${key}=${itemVal}
+    \    ...    ELSE IF    0<${i}<{columnCount}-3    set to dictionary    ${params}    ${key}=${itemVal}
+    \    ...    ELSE IF    ${i}=={columnCount}-3    set to dictionary    ${asserts}    ${key}=${itemVal}
+    \    ...    ELSE IF    ${i}=={columnCount}-2    set to dictionary    ${returnValue}    ${key}=${itemVal}
+    \    ...    ELSE IF    ${i}=={columnCount}-1    set to dictionary    ${level}    ${key}=${itemVal}
+    log    OFFexcel set_params_to_list_two
+    [Return]    ${testcasename}    ${params}    ${asserts}    ${returnValue}    ${level}

@@ -1,0 +1,154 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Keywords ***
+ad-screen_device
+    [Arguments]    ${deviceId}    ${message}=查询成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/device/${deviceId}
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+ad-screen_program-record_list
+    [Arguments]    ${dicParams}    ${message}=成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/program-record/list
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+ad-screen_program_screen-on
+    [Arguments]    ${dicParams}    ${message}=成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/device/screen-on
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+ad-screen_program_start
+    [Arguments]    ${dicParams}    ${message}=成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/program/start
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+ad-screen_program_stop
+    [Arguments]    ${dicParams}    ${message}=成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/program/stop
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+ad-screen_screenshot
+    [Arguments]    ${dicParams}    ${message}=成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/device/screenshot
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+ad-screen_status
+    [Arguments]    ${dicParams}    ${message}=查询成功    ${returnKey}=object
+    ${url}    set variable    /ad-screen/device/status
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+alarm_getById
+    [Arguments]    ${dicParams}    ${message}=查询成功    ${returnKey}=object
+    ${url}    set variable    /alarm/alarmBox/getById
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+bright_getRateOfLighting
+    [Arguments]    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /bright/iotlight/getRateOfLighting
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+bright_nb_control
+    [Arguments]    ${dicParams}    ${message}=调光成功    ${returnKey}=object
+    ${url}    set variable    /bright/iotlight/nb/control
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+bright_nb_lightingRead
+    [Arguments]    ${dicParams}    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /bright/iotlight/nb/lightingRead
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+camera_getById
+    [Arguments]    ${dicParams}    ${message}=查询成功    ${returnKey}=object
+    ${url}    set variable    /camera/camera/getById
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+camera_getPlatformParam
+    [Arguments]    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /camera/camera/getPlatformParam
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+envir_find
+    [Arguments]    ${dicParams}    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /envir/device/find
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+envir_hydropslog_getByDevId
+    [Arguments]    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /envir/hydropslog/getByDevId
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+envir_weather_getByDevId
+    [Arguments]    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /envir/weather/getByDevId
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+lighting_getAdsListByLightingLike
+    [Arguments]    ${total}=0    ${returnKey}=records
+    ${url}    set variable    /lighting/lighting/getAdsListByLightingLike
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+lighting_getLampsListByLighting
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=records
+    ${url}    set variable    /lighting/lighting/getLampsListByLighting
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+lighting_getLightingList
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=records
+    ${url}    set variable    /lighting/lighting/getLightingList
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+lighting_getLightingListById
+    [Arguments]    ${dicParams}
+    ${header}    create dictionary    Content-Type==application/x-www-form-urlencoded    Authorization=${G_AUTHORIZATION}
+    create session    ener    ${G_IP}
+    ${url}    set variable    /lighting/lighting/getLightingListById
+    ${response}=    get request    ener    ${url}    params=${dicParams}    headers=${header}
+    should be equal as integers    ${response.status_code}    200
+    ${dicResp}    set variable    ${response.json()}
+    log    RESPONSEURL${response.url}
+    [Return]    ${dicResp}
+
+rbac_center-point
+    [Arguments]    ${message}=成功    ${returnKey}=object
+    ${url}    set variable    /rbac/center-point/current
+    ${dicAssert}    create dictionary    message=${message}
+    ${addCameraId}    http_get_return    ${url}    ${none}    ${dicAssert}    ${returnKey}
+    [Return]    ${addCameraId}

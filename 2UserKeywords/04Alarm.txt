@@ -1,0 +1,124 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Variables ***
+${alarmTableName}    alarm_box    # 数据库中一键报警的表名
+&{alarm apikey and dbkey}    projectId=project_id    areaId=area_id    deviceName=device_name    deviceNumber=device_number    deviceIp=device_ip    devicePort=device_port    deviceAccount=device_account
+...               devicePassword=device_password    remark=remark    id=id    ##接口请求参数=数据库字段名，用户接口内容与数据库内容断言
+${ADD_ALARM_SUCCESS}    新增成功
+${UPDATE_ALARM_SUCCESS}    编辑成功
+${DELETE_ALARM_SUCCESS}    删除成功
+
+*** Keywords ***
+alarm_edit_add
+    [Arguments]    ${dicParams}    ${message}=${ADD_ALARM_SUCCESS}    ${returnKey}=object.id
+    ${url}    set variable    /alarm/alarmBox/add
+    ${dicAssert}    create dictionary    message=${message}
+    ${alarmID}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    set suite variable    ${S_ADD_ALARM_ID}    ${alarmID}
+    #数据库断言--获取每列的值拼接作为where语句
+    ${tableFromWhere}    set variable    ${alarmTableName} WHERE id='${alarmID}' and area_id='${dicParams}[areaId]' and device_name='${dicParams}[deviceName]' and device_number='${dicParams}[deviceNumber]'
+    run keyword if    '${alarmID}'!='${none}' and '${message}'=='${ADD_ALARM_SUCCESS}'    assert_response_database_add_or_update    ${alarm apikey and dbkey}    ${dicParams}    ${tableFromWhere}
+    ...    ELSE    log    【没新增成功不走数据库断言】
+    [Return]    ${alarmID}
+
+alarm_edit_add_oneData
+    [Arguments]    ${mark}=a
+    [Documentation]    固定数据新增一条一键报警数据，用于更新、删除接口使用
+    log    ---新增一条一键报警数据并获取其id---
+    ${time}=    get_time_no_year
+    ${dicParams}    create dictionary    projectId=${G_PROJECT_ID}    areaId=${G_AREA_ID}    deviceName=o${mark}摄${time}    deviceNumber=o${mark}${time}    deviceIp=8.8.9.9
+    ...    devicePort=222    deviceAccount=${time}    devicePassword=${time}    remark=${mark}${time}
+    ${alarmID}=    alarm_edit_add    ${dicParams}
+    [Return]    ${alarmID}
+
+alarm_edit_query
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=records
+    ${url}    set variable    /alarm/alarmBox/query
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    #获取第一行数据id
+    ${alarmID}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][id]
+    ...    ELSE    set variable    ${None}
+    #数据库断言------获取每列的值拼接作为where语句
+    #${tableWhereStatement}    set variable    id in (${id})
+    run keyword if    ${lenRespKeyVal}>0    assert_response_database_query    ${alarm apikey and dbkey}    ${respKeyVal}    ${alarmTableName}    id
+    ...    ELSE    log    【没查询数据不走数据库断言】
+    [Return]    ${alarmID}
+
+alarm_edit_pageCondition
+    [Arguments]    ${dicParams}    ${message}=${PAGE_CAMERA_SUCCESS}    ${returnKey}=object.records
+    ${url}    set variable    /camera/camera/page-condition
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_get_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    #获取第一行数据id
+    ${cameraId}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][id]
+    ...    ELSE    set variable    ${None}    #数据库断言------获取每列的值拼接作为where语句    #${tableWhereStatement}    set variable
+    ...    # id in (${id})    #run keyword if    ${lenRespKeyVal}>0    assert_response_database_query    ${camera apikey and dbkey}    ${respKeyVal}
+    ...    # ${cameraTableName}    id    # ELSE    log    ***pass【没查询数据不走数据库断言】***
+    [Return]    ${cameraId}
+
+alarm_edit_update
+    [Arguments]    ${dicParams}    ${message}=${UPDATE_ALARM_SUCCESS}    ${returnKey}=object.id
+    ${url}    set variable    /alarm/alarmBox/update
+    ${dicAssert}    create dictionary    message=${message}
+    ${updateAlarmId}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    #数据库断言--获取每列的值拼接作为where语句
+    ${tableFromWhere}    set variable    ${alarmTableName} WHERE id='${updateAlarmId}' and area_id='${dicParams}[areaId]' and device_name='${dicParams}[deviceName]' and device_number='${dicParams}[deviceNumber]'
+    run keyword if    '${updateAlarmId}'!='${none}' and '${message}'=='${UPDATE_ALARM_SUCCESS}'    assert_response_database_add_or_update    ${alarm apikey and dbkey}    ${dicParams}    ${tableFromWhere}
+    ...    ELSE    log    【没更新成功不走数据库断言】
+    [Return]    ${updateAlarmId}
+
+alarm_edit_delete
+    [Arguments]    ${dicParams}    ${message}=${DELETE_ALARM_SUCCESS}
+    ${url}    set variable    /alarm/alarmBox/delete
+    ${dicAssert}    create dictionary    message=${message}
+    http_post    ${url}    ${dicParams}    ${dicAssert}
+    #数据库断言
+    ${ids}    get from dictionary    ${dicParams}    ids[]
+    #tableSelectFrom，作为select 的查询字段；
+    ${tableSelectFrom}    set variable    select id,deleted from ${alarmTableName}
+    run keyword if    '${ids}'!='${none}' and '${message}'=='${DELETE_ALARM_SUCCESS} '    assert_response_database_delete    ${tableSelectFrom}    id    ${ids}
+    ...    ELSE    log    【没删除成功不走数据库断言】
+
+alarm_overview_getAlarmListByLighting
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=records
+    ${url}    set variable    /lighting/lighting/getAlarmListByLighting
+    ${dicAssert}    create dictionary    total=${total}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    ${AlarmID}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][id]
+    ...    ELSE    set variable    ${None}
+    [Return]    ${AlarmID}
+
+alarm_overview_statusNum
+    [Arguments]    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /alarm/alarmBox/statusNum
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_post_return    ${url}    ${dicAssert}
+    [Return]    ${respKeyVal}
+
+alarm_overview_status
+    [Arguments]    ${dicParams}    ${success}=True    ${returnKey}=object
+    ${url}    set variable    /alarm/alarmBox/status
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_post_return    ${url}    ${dicAssert}
+    [Return]    ${respKeyVal}
+
+alarm_overview_protect
+    [Arguments]    ${dicParams}    ${message}=（解除）布防成功    ${returnKey}=object
+    ${url}    set variable    /alarm/alarmBox/protect
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicAssert}
+    [Return]    ${respKeyVal}
+
+alarm_overview_relieve
+    [Arguments]    ${dicParams}    ${message}=（解除）布防成功    ${returnKey}=object
+    ${url}    set variable    /alarm/alarmBox/relieve
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicAssert}
+    [Return]    ${respKeyVal}
+
+alarm_overview_查看按钮

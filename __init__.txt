@@ -1,0 +1,44 @@
+*** Settings ***
+Suite Setup       Setup_Pre_Condition
+Resource          9ShareResource.txt    #Test Teardown    Common_Test_Teardown    #Test Setup    Common_Test_Setup    ${TEST NAME}    ${OUTPUT DIR}
+
+*** Keywords ***
+Setup_Testbed_Variable
+    log    -----Setup_Testbed_Variable----
+    log    pybot --include log -T --outputdir D:\DRobotFramework\Lfour\log2 demo2.robot
+    log    pybot -i log -T -d D:\DRobotFramework\output demo2.robot
+    #####LAN PC Info#####
+    #---新测试环境：127.0.0.1 ---#
+    Set global Variable    ${G_IP}    http://127.0.0.1   ###项目ip地址
+    Set global Variable    ${G_DB_CONFIG_USER}    database='smartcity',user='root',password='123456',host='119.3.5.158',port=3307    ###项目数据库地址
+    Set global Variable    ${G_DB_CONFIG_DEVICE}    database='smartcity',user='root',password='123456',host='119.3.5.158',port=3308    ###项目数据库地址
+    Set global Variable    &{UESERNAME_PASSWORD}    username=admin    password=Pa0sfRlNye/V53Txebx5od0HfFZWFufZQWwe291EH6tJbCCnzl/H6jURiDhRBxz5PMiqE1PQE/3vymDr/Pvu8edYP4VzN58jvu0rO7oNgPZl/9JbJNflvjKq8J9AosNgyPkyEbbG6meN2CCyUHgQmep6CQ5hv2fLmHBMktUAK9I=
+    #---华为云：127.0.0.1---#
+    #Set global Variable    ${G_IP}    http://127.0.0.1    ###项目ip地址
+    #Set global Variable    ${G_DB_CONFIG_USER}    database='smartcity',user='root',password='123456',host='127.0.0.1',port=3307    ###项目数据库地址
+    #Set global Variable    ${G_DB_CONFIG_DEVICE}    database='smartcity',user='root',password='123456',host='127.0.0.1',port=3308    ###项目数据库地址
+    #Set global Variable    &{UESERNAME_PASSWORD}    username=admin    password=b5Xws5cLxtEIH6fde4z/yDjcFqu8Cz5mOZWsQVn+WmJNnzJ3Xl7p1nhiv4sE1a10gStyomMirLdNdGanRpVIW3MMHtxtG+mBc62WoOdBNv/OmXDk+wXuNIrQzIoows/MkpxUaVTW7Cok5nWBjsNm//bH0U5FwewkEvfy4E+b0LY=
+    #####Path Info#####
+    #set environment variable    G_ROBOT_PATH    D:\\DRobotFramework\\rf-enerci    #root directory
+    #set environment variable    G_LOG_PATH    %{G_ROBOT_PATH}\\logs    #log directory
+    #set environment variable    G_CUTTENTLOG_PATH    ${OUTPUT DIR}
+    #set environment variable    G_TOTAL_RESULT_PATH    %{G_ROBOT_PATH}\\Total_Results    #test results
+    #set environment variable    G_OUTPUTDIR_PATH    ${OUTPUT DIR}
+    #set environment variable    G_PATH_LIBRARY    %{G_ROBOT_PATH}\\Library    #
+    #####Appium Server#####
+    #set environment variable    G_APPIUM_HOST_IP0    ${EMPTY}
+    #####Broswer Type#####
+    #set environment variable    G_CUSTOME_BROSWER_TYPE    chrome    #Multi-Broswer
+
+Setup_Pre_Condition
+    Setup_Testbed_Variable
+    get_token
+    ${month}    ${day}    ${hour}    ${min}    get time    month,day,hour,min
+    Set global Variable    ${G_TIME}    ${month}${day}${hour}${min}
+    ${projectidareaid}    project_query_projectid_areaid    projectName=自动化测试项目    areaName=自动化测试区域    #获取projectid_and_areaid
+    set global variable    ${G_PROJECT_ID}    ${projectidareaid}[projectid]
+    set global variable    ${G_AREA_ID}    ${projectidareaid}[areaid]
+    Should Not Be Equal As Strings    ${G_PROJECT_ID}    ${None}    msg=没有"自动化测试项目"，请先创建
+    Should Not Be Equal As Strings    ${G_AREA_ID}    ${None}    msg=没有"自动化测试区域"，请先创建
+    should not be empty    ${G_AUTHORIZATION}    msg=G_AUTHORIZATION不能为空
+    should not be empty    ${G_TIME}    msg=G_TIME不能为空

@@ -1,0 +1,63 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Keywords ***
+get_token
+    log    ------获取authorization--------
+    ${assertDic}    create dictionary    success=True    message=登录成功
+    ${url}    set variable    /login-nd
+    ${header}    create dictionary    Content-Type=application/x-www-form-urlencoded
+    create session    ener    ${G_IP}
+    ${response}    post request    ener    ${url}    data=${UESERNAME_PASSWORD}    headers=${header}
+    should be equal as strings    ${response.status_code}    200
+    log    RESPONSEURL${response.url}
+    log    RESPONSETEXT${response.text}
+    ${resp}    set variable    ${response.json()}
+    @{assertKey}    get dictionary keys    ${assertDic}
+    : FOR    ${key}    IN    @{assertKey}
+    \    should be equal as strings    ${assertDic}[${key}]    ${resp}[${key}]
+    ${token}    set variable    ${resp}[object][token_type]${resp}[object][access_token]
+    set global variable    ${G_AUTHORIZATION}    ${token}
+    log    ------已获取authorization--------
+
+get_time_no_year
+    Sleep    1S
+    ${month}    ${day}    ${hour}    ${min}    ${sec}    get time    month,day,hour,min,sec
+    ${time}    set variable    ${month}${day}${hour}${min}${sec}
+    [Return]    ${time}
+
+get_projectid_and_areaid_smart
+    ####projectid_areaid_query###
+    ${projectidareaid}    project_query_projectid_areaid
+    ####project_add###
+    ${dicParams_project_add}    set variable    name=自动化测试项目    country=中国    city=杭州市    province=浙江省    termOfValidity=0
+    ...    enable=true    belongTo=    departmentId=root    longitude=120.190963    latitude=30.192924    remark=自动化测试项目
+    #${projectid}    project_add    ${dicParams_project_add}
+    ####area_add###
+    ${dicParams_area_add}    set variable    parentid=cafb4ead68fdb01fa4397fb985e63b2d    name=自动化测试区域    remark=    departmentId=root    longitude=120.193997
+    ...    latitude=30.191471
+    #${areaid}    area_add    ${dicParams_area_add}
+    ####department_add###
+    ${dicParams_department_add}    set variable    departmentName=自动化测试单位    contactPerson=自动化测试单元    contactNumber=13755556666    email=135666@rf.cn    remark=自动化测试单位
+    #${departmentid_department_add}    department_add    ${dicParams_department_add}
+    ####department_query###
+    ${dicParams_department_query}    set variable    searchName=自动化测试单位    size=10    current=1
+    #${departmentid_department_query}    department_query    ${dicParams_department_query}
+    ####user_add###
+    ${dicParams_user_add}    set variable    departmentId=011d3bc91bbb8661fb9f080541b46c32    name=自动化测试姓名    sex=man    account=autotest1    password=123456
+    ...    phone=13755556667    email=135@rf.cn    roleId=a8b5618d9f35fd966f16bf1b25fa36d9    enabled=true    remark=自动化测试用户
+    #${userid_user_add}    user_add    ${dicParams_user_add}
+    ####role_add###
+    ${dicParams_role_add}    set variable    searchName=自动化测试单位    size=10    current=1
+    #${userid_role_add}    role_add    ${dicParams_role_add}
+    ###role_query###
+    ${dicParams_role_query}    set variable    searchName=自动化测试单位    size=10    current=1
+    #${roleid_role_query}    role_query    ${dicParams_role_query}
+    ####auth-control_add###
+    ${dicParams_auth-control_add}    set variable    departmentId=011d3bc91bbb8661fb9f080541b46c32    userId=d4a50b836be85a13a498241d9c3f3a87    searchField=自动化测试姓名    roleId=a8b5618d9f35fd966f16bf1b25fa36d9    orgIds[]=cafb4ead68fdb01fa4397fb985e63b2d,fc5ca039f78bd96a16fb416b5ba549f9
+    ...    remark=
+    #${controlid_auth-control_add}    auth-control_add    ${dicParams_auth-control_add}
+    ###auth-control_query###
+    ${dicParams_auth-control_query}    set variable    department_cache=true    user_cache=true    role_cache=true    size=10    current=1
+    #${controlid_auth-control_query}    auth-control_query    ${dicParams_auth-control_query}
+    #判断projectidAreaid值情况

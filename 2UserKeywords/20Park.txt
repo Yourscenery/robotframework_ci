@@ -1,0 +1,38 @@
+*** Settings ***
+Resource          ../9ShareResource.txt
+
+*** Variables ***
+
+
+*** Keywords ***
+park_door_list
+    [Arguments]    ${dicParams}    ${success}=${true}    ${returnKey}=object
+    ${url}    set variable    /door/doorCtrlDev/searchByOrgId
+    ${dicAssert}    create dictionary    success=${success}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    ${lenRespKeyVal}    get length    ${respKeyVal}
+    #获取第一行数据id
+    ${doorId}=    run keyword if    ${lenRespKeyVal}>0    set variable    ${respKeyVal}[0][acsdevindexcode]
+    ...    ELSE    set variable    ${None}    #数据库断言------获取每列的值拼接作为where语句    #${tableWhereStatement}    set variable
+    ...    # id in (${doorId})    #run keyword if    ${lenRespKeyVal}>0    assert_response_database_query    ${door apikey and dbkey}    ${respKeyVal}
+    ...    # ${doorTableName}    id    # ELSE    log    【没查询数据不走数据库断言】
+    [Return]    ${doorId}
+
+park_door_event
+    [Arguments]    ${dicParams}    ${total}=0    ${returnKey}=total
+    ${url}    set variable    /door/event/queryDoorEventList
+    ${dicAssert}    create dictionary    total=${total}
+    ${total}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${total}
+
+
+park_door_control
+    [Arguments]    ${dicParams}    ${message}=反控状态(0-常开 1-门闭 2-门开 3-常闭):1    ${returnKey}=object
+    ${url}    set variable    /door/doorCtrlPoint/doControl
+    ${dicAssert}    create dictionary    message=${message}
+    ${respKeyVal}    http_post_return    ${url}    ${dicParams}    ${dicAssert}    ${returnKey}
+    [Return]    ${respKeyVal}
+
+
+park_monitor
+    log    同设备总览的接口
