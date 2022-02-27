@@ -182,6 +182,6 @@ if __name__ == "__main__":
 
     # diy_get_project_area_id(obj,'test','testarea')
     # replace_json("C:\\Users\\wzl\\Desktop\\ener-datadapter.postman_collection.json","ener-datadapter")
-    # print(get_time_no_year())
+    print(get_time_no_year())
     pass
 
